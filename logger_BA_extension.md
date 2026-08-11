@@ -22,6 +22,8 @@ Das Modul `live_to_mariadb.py` übernimmt die Verarbeitung und Speicherung der v
 ```python
 from sobotify.tools.analysing import live_to_mariadb
 
+---
+
 ## 2. Aufbau der MariaDB-Verbindung
 
 ### Position
