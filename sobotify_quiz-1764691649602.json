@@ -1,0 +1,1224 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": 1,
+  "links": [
+    {
+      "asDropdown": false,
+      "icon": "external link",
+      "includeVars": false,
+      "keepTime": false,
+      "tags": [],
+      "targetBlank": false,
+      "title": "New link",
+      "tooltip": "",
+      "type": "dashboards",
+      "url": ""
+    },
+    {
+      "asDropdown": false,
+      "icon": "external link",
+      "includeVars": false,
+      "keepTime": false,
+      "tags": [],
+      "targetBlank": false,
+      "title": "New link",
+      "tooltip": "",
+      "type": "dashboards",
+      "url": ""
+    }
+  ],
+  "panels": [
+    {
+      "datasource": {
+        "type": "mysql",
+        "uid": "cf1tmijntrv9cb"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "s"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "avg_latency_ms"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "dark-yellow",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "total_interactions"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "dark-purple",
+                  "mode": "fixed"
+                }
+              },
+              {
+                "id": "unit",
+                "value": "short"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "total_correct"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "dark-green",
+                  "mode": "fixed"
+                }
+              },
+              {
+                "id": "unit",
+                "value": "short"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "total_wrong"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "dark-red",
+                  "mode": "fixed"
+                }
+              },
+              {
+                "id": "unit",
+                "value": "short"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "correct_percent"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "continuous-RdYlGr"
+                }
+              },
+              {
+                "id": "unit",
+                "value": "percent"
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 0
+      },
+      "id": 11,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "12.2.0",
+      "targets": [
+        {
+          "dataset": "sobotify_data",
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "WITH attempts AS (\r\n    SELECT\r\n        qi.question_time,\r\n        qi.answer_time,\r\n        qi.latency_ms,\r\n        qi.answer_text,\r\n\r\n        (\r\n            SELECT ev.topic\r\n            FROM human_speak ev\r\n            WHERE ev.ts > qi.answer_time\r\n              AND ev.ts <= qi.answer_time + INTERVAL 20 SECOND\r\n              AND ev.topic IN (\r\n                'log/quiz/answer/correct','quiz/answer/correct',\r\n                'log/quiz/answer/wrong','quiz/answer/wrong'\r\n              )\r\n            ORDER BY ev.ts\r\n            LIMIT 1\r\n        ) AS eval_topic\r\n    FROM quiz_interactions qi\r\n    WHERE $__timeFilter(qi.answer_time)   -- <=== wichtig\r\n)\r\n\r\nSELECT\r\n    AVG(latency_ms) / 1000.0 AS avg_latency_s,\r\n\r\n    COUNT(*) AS total_interactions,\r\n\r\n    SUM(CASE WHEN eval_topic LIKE '%correct%' THEN 1 ELSE 0 END) AS total_correct,\r\n    SUM(CASE WHEN eval_topic LIKE '%wrong%'   THEN 1 ELSE 0 END) AS total_wrong,\r\n\r\n    100.0 * SUM(CASE WHEN eval_topic LIKE '%correct%' THEN 1 ELSE 0 END)\r\n           / NULLIF(COUNT(*), 0) AS correct_percent\r\nFROM attempts;\r\n",
+          "refId": "A",
+          "sql": {
+            "columns": [
+              {
+                "parameters": [],
+                "type": "function"
+              }
+            ],
+            "groupBy": [
+              {
+                "property": {
+                  "type": "string"
+                },
+                "type": "groupBy"
+              }
+            ],
+            "limit": 50
+          }
+        }
+      ],
+      "title": "avg_latency",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "mysql",
+        "uid": "cf1tmijntrv9cb"
+      },
+      "description": "Shows how many seconds pass between the question and the answer.\n\n",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisGridShow": true,
+            "axisLabel": "Value",
+            "axisPlacement": "left",
+            "fillOpacity": 100,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineWidth": 10,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "decimals": 0,
+          "mappings": [
+            {
+              "options": {
+                "1": {
+                  "index": 0,
+                  "text": "Question"
+                },
+                "2": {
+                  "index": 1,
+                  "text": "Correct"
+                },
+                "3": {
+                  "index": 2,
+                  "text": "Wrong"
+                }
+              },
+              "type": "value"
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              }
+            ]
+          },
+          "unit": "string"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "value Question"
+            },
+            "properties": [
+              {
+                "id": "custom.axisColorMode",
+                "value": "text"
+              },
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "dark-blue",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "value Correct"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "dark-green",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "value Wrong"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "dark-red",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 0
+      },
+      "id": 2,
+      "options": {
+        "barRadius": 0,
+        "barWidth": 1,
+        "fullHighlight": false,
+        "groupWidth": 0.5,
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "orientation": "auto",
+        "showValue": "auto",
+        "stacking": "none",
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "single",
+          "sort": "none"
+        },
+        "xTickLabelRotation": 0,
+        "xTickLabelSpacing": 0
+      },
+      "pluginVersion": "12.2.0",
+      "targets": [
+        {
+          "dataset": "sobotify_data",
+          "editorMode": "code",
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "-- =============================\r\n-- 1) QUESTION EVENTS (blau)\r\n-- =============================\r\n(\r\n  SELECT\r\n    q.ts AS time,\r\n    1 AS value,\r\n    'Question' AS event_label\r\n  FROM robot_speak q\r\n  WHERE q.topic = 'log/quiz/question'\r\n    AND $__timeFilter(q.ts)\r\n)\r\n\r\nUNION ALL\r\n\r\n-- =============================\r\n-- 2) CORRECT ANSWERS (grün)\r\n-- Zeit = speech-recognition/statement\r\n-- correctness = erstes Bewertungs-Event danach\r\n-- =============================\r\n(\r\n  SELECT\r\n    hs.ts AS time,\r\n    2 AS value,\r\n    'Correct' AS event_label\r\n  FROM human_speak hs\r\n  WHERE hs.topic = 'speech-recognition/statement'\r\n    AND $__timeFilter(hs.ts)\r\n    AND EXISTS (\r\n      SELECT 1\r\n      FROM human_speak ok\r\n      WHERE ok.topic IN ('log/quiz/answer/correct','quiz/answer/correct')\r\n        AND ok.ts = (\r\n          -- ERSTES Bewertungs-Event nach der Antwort\r\n          SELECT MIN(ev.ts)\r\n          FROM human_speak ev\r\n          WHERE ev.ts > hs.ts\r\n            AND ev.topic IN (\r\n              'log/quiz/answer/correct','quiz/answer/correct',\r\n              'log/quiz/answer/wrong','quiz/answer/wrong'\r\n            )\r\n        )\r\n    )\r\n)\r\n\r\nUNION ALL\r\n\r\n-- =============================\r\n-- 3) WRONG ANSWERS (rot)\r\n-- Zeit = speech-recognition/statement\r\n-- correctness = erstes Bewertungs-Event danach\r\n-- =============================\r\n(\r\n  SELECT\r\n    hs.ts AS time,\r\n    3 AS value,\r\n    'Wrong' AS event_label\r\n  FROM human_speak hs\r\n  WHERE hs.topic = 'speech-recognition/statement'\r\n    AND $__timeFilter(hs.ts)\r\n    AND EXISTS (\r\n      SELECT 1\r\n      FROM human_speak wr\r\n      WHERE wr.topic IN ('log/quiz/answer/wrong','quiz/answer/wrong')\r\n        AND wr.ts = (\r\n          -- ERSTES Bewertungs-Event nach der Antwort\r\n          SELECT MIN(ev.ts)\r\n          FROM human_speak ev\r\n          WHERE ev.ts > hs.ts\r\n            AND ev.topic IN (\r\n              'log/quiz/answer/correct','quiz/answer/correct',\r\n              'log/quiz/answer/wrong','quiz/answer/wrong'\r\n            )\r\n        )\r\n    )\r\n)\r\n\r\nORDER BY time;\r\n",
+          "refId": "A",
+          "sql": {
+            "columns": [
+              {
+                "parameters": [],
+                "type": "function"
+              }
+            ],
+            "groupBy": [
+              {
+                "property": {
+                  "type": "string"
+                },
+                "type": "groupBy"
+              }
+            ],
+            "limit": 50
+          }
+        }
+      ],
+      "title": "Response latency",
+      "type": "barchart"
+    },
+    {
+      "datasource": {
+        "type": "mysql",
+        "uid": "cf1tmijntrv9cb"
+      },
+      "description": "This panel visualizes the user’s quiz performance over time. The green curve shows the average response latency for each interaction, while the yellow curve represents the percentage of correct answers based on detected correctness events. Together, these trends reveal how response speed and answer accuracy evolve across different quiz sessions.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "smooth",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "always",
+            "showValues": false,
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "percent_correct"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "percent"
+              },
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "dark-green",
+                  "mode": "continuous-RdYlGr"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "avg_latency_s"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "dark-yellow",
+                  "mode": "fixed"
+                }
+              },
+              {
+                "id": "unit",
+                "value": "ms"
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 8
+      },
+      "id": 12,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "12.2.0",
+      "targets": [
+        {
+          "dataset": "sobotify_data",
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "WITH runs AS (\r\n    SELECT\r\n        qi.question_time,\r\n        qi.answer_time,\r\n        qi.latency_ms / 1000.0 AS latency_s,\r\n\r\n        CASE\r\n            WHEN EXISTS (\r\n                SELECT 1\r\n                FROM human_speak hs\r\n                WHERE hs.topic IN ('log/quiz/answer/correct','quiz/answer/correct')\r\n                  AND hs.ts BETWEEN qi.question_time\r\n                               AND qi.answer_time + INTERVAL 25 SECOND\r\n            ) THEN 1\r\n            WHEN EXISTS (\r\n                SELECT 1\r\n                FROM human_speak hs\r\n                WHERE hs.topic IN ('log/quiz/answer/wrong','quiz/answer/wrong')\r\n                  AND hs.ts BETWEEN qi.question_time\r\n                               AND qi.answer_time + INTERVAL 25 SECOND\r\n            ) THEN 0\r\n            ELSE NULL\r\n        END AS is_correct\r\n    FROM quiz_interactions qi\r\n    WHERE $__timeFilter(qi.answer_time)\r\n),\r\n\r\ncleaned AS (\r\n    SELECT\r\n        question_time,\r\n        latency_s,\r\n        is_correct\r\n    FROM runs\r\n    WHERE is_correct IS NOT NULL\r\n),\r\n\r\ncum AS (\r\n    SELECT\r\n        question_time,\r\n        latency_s,\r\n        is_correct,\r\n\r\n        ROW_NUMBER() OVER (ORDER BY question_time) AS n,\r\n        SUM(is_correct) OVER (ORDER BY question_time) AS n_correct\r\n    FROM cleaned\r\n)\r\n\r\nSELECT\r\n    question_time AS time,\r\n    latency_s,\r\n\r\n    (n_correct * 100.0 / n) AS percent_correct\r\nFROM cum\r\nORDER BY time;\r\n",
+          "refId": "A",
+          "sql": {
+            "columns": [
+              {
+                "parameters": [],
+                "type": "function"
+              }
+            ],
+            "groupBy": [
+              {
+                "property": {
+                  "type": "string"
+                },
+                "type": "groupBy"
+              }
+            ],
+            "limit": 50
+          }
+        }
+      ],
+      "title": "Learning Performance Over Time",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "mysql",
+        "uid": "cf1tmijntrv9cb"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "footer": {
+              "reducers": []
+            },
+            "inspect": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 8
+      },
+      "id": 10,
+      "options": {
+        "cellHeight": "sm",
+        "showHeader": true,
+        "sortBy": [
+          {
+            "desc": true,
+            "displayName": "latency_ms"
+          }
+        ]
+      },
+      "pluginVersion": "12.2.0",
+      "targets": [
+        {
+          "dataset": "sobotify_data",
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "-- Alle Quizfragen im ausgewählten Zeitraum\r\nWITH questions AS (\r\n    SELECT\r\n        ts,\r\n        message\r\n    FROM robot_speak\r\n    WHERE topic = 'log/quiz/question'\r\n),\r\n\r\n-- Alle erkannten Antworten (jede Antwort = ein Versuch)\r\nanswers_raw AS (\r\n    SELECT\r\n        hs.ts      AS answer_time,\r\n        hs.message AS answer_text\r\n    FROM human_speak hs\r\n    WHERE hs.topic = 'speech-recognition/statement'\r\n      AND $__timeFilter(hs.ts)\r\n),\r\n\r\n-- Jede Antwort bekommt die letzte Frage davor zugeordnet\r\nanswers_with_question AS (\r\n    SELECT\r\n        ar.answer_time,\r\n        ar.answer_text,\r\n\r\n        (\r\n            SELECT q.ts\r\n            FROM questions q\r\n            WHERE q.ts <= ar.answer_time\r\n            ORDER BY q.ts DESC\r\n            LIMIT 1\r\n        ) AS question_time,\r\n\r\n        (\r\n            SELECT q.message\r\n            FROM questions q\r\n            WHERE q.ts <= ar.answer_time\r\n            ORDER BY q.ts DESC\r\n            LIMIT 1\r\n        ) AS question_text\r\n    FROM answers_raw ar\r\n),\r\n\r\n-- Korrektheit pro Antwort bestimmen (erstes Bewertungs-Topic nach der Antwort)\r\nanswers_scored AS (\r\n    SELECT\r\n        awq.question_time,\r\n        awq.question_text,\r\n        awq.answer_time,\r\n        awq.answer_text,\r\n\r\n        CASE\r\n            WHEN EXISTS (\r\n                SELECT 1\r\n                FROM human_speak ev\r\n                WHERE ev.topic IN ('log/quiz/answer/correct','quiz/answer/correct')\r\n                  AND ev.ts = (\r\n                      SELECT MIN(e2.ts)\r\n                      FROM human_speak e2\r\n                      WHERE e2.ts > awq.answer_time\r\n                        AND e2.topic IN (\r\n                            'log/quiz/answer/correct','quiz/answer/correct',\r\n                            'log/quiz/answer/wrong','quiz/answer/wrong'\r\n                        )\r\n                  )\r\n            ) THEN 'Correct'\r\n\r\n            WHEN EXISTS (\r\n                SELECT 1\r\n                FROM human_speak ev\r\n                WHERE ev.topic IN ('log/quiz/answer/wrong','quiz/answer/wrong')\r\n                  AND ev.ts = (\r\n                      SELECT MIN(e2.ts)\r\n                      FROM human_speak e2\r\n                      WHERE e2.ts > awq.answer_time\r\n                        AND e2.topic IN (\r\n                            'log/quiz/answer/correct','quiz/answer/correct',\r\n                            'log/quiz/answer/wrong','quiz/answer/wrong'\r\n                        )\r\n                  )\r\n            ) THEN 'Wrong'\r\n\r\n            ELSE 'Unknown'\r\n        END AS correctness\r\n    FROM answers_with_question awq\r\n)\r\n\r\nSELECT\r\n    question_time AS time,   -- X-Achse in Grafana\r\n    question_text AS question,\r\n    answer_time,\r\n    answer_text,\r\n    ROUND(\r\n        TIMESTAMPDIFF(MICROSECOND, question_time, answer_time) / 1000000.0,\r\n        2\r\n    ) AS latency_s,\r\n    correctness\r\nFROM answers_scored\r\nWHERE question_time IS NOT NULL\r\nORDER BY question_time DESC, answer_time ASC\r\nLIMIT 500;\r\n",
+          "refId": "A",
+          "sql": {
+            "columns": [
+              {
+                "parameters": [],
+                "type": "function"
+              }
+            ],
+            "groupBy": [
+              {
+                "property": {
+                  "type": "string"
+                },
+                "type": "groupBy"
+              }
+            ],
+            "limit": 50
+          }
+        }
+      ],
+      "title": "quiz interactions",
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "mysql",
+        "uid": "cf1tmijntrv9cb"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "footer": {
+              "reducers": []
+            },
+            "hideFrom": {
+              "viz": false
+            },
+            "inspect": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 16
+      },
+      "id": 5,
+      "options": {
+        "cellHeight": "sm",
+        "showHeader": true
+      },
+      "pluginVersion": "12.2.0",
+      "targets": [
+        {
+          "dataset": "sobotify_data",
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT\r\n  ts AS time,\r\n  topic,\r\n  message\r\nFROM human_speak\r\nORDER BY ts DESC\r\nLIMIT 200;\r\n",
+          "refId": "A",
+          "sql": {
+            "columns": [
+              {
+                "parameters": [],
+                "type": "function"
+              }
+            ],
+            "groupBy": [
+              {
+                "property": {
+                  "type": "string"
+                },
+                "type": "groupBy"
+              }
+            ],
+            "limit": 50
+          }
+        }
+      ],
+      "title": "human_speak",
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "mysql",
+        "uid": "cf1tmijntrv9cb"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "footer": {
+              "reducers": []
+            },
+            "hideFrom": {
+              "viz": false
+            },
+            "inspect": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 16
+      },
+      "id": 4,
+      "options": {
+        "cellHeight": "sm",
+        "showHeader": true
+      },
+      "pluginVersion": "12.2.0",
+      "targets": [
+        {
+          "dataset": "sobotify_data",
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT\r\n  ts AS time,\r\n  topic,\r\n  message\r\nFROM robot_speak\r\nORDER BY ts DESC\r\nLIMIT 200;\r\n",
+          "refId": "A",
+          "sql": {
+            "columns": [
+              {
+                "parameters": [],
+                "type": "function"
+              }
+            ],
+            "groupBy": [
+              {
+                "property": {
+                  "type": "string"
+                },
+                "type": "groupBy"
+              }
+            ],
+            "limit": 50
+          }
+        }
+      ],
+      "title": "robot_speak",
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "mysql",
+        "uid": "cf1tmijntrv9cb"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "footer": {
+              "reducers": []
+            },
+            "hideFrom": {
+              "viz": false
+            },
+            "inspect": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 24
+      },
+      "id": 7,
+      "options": {
+        "cellHeight": "sm",
+        "showHeader": true
+      },
+      "pluginVersion": "12.2.0",
+      "targets": [
+        {
+          "dataset": "sobotify_data",
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT\r\n  ts AS time,\r\n  topic,\r\n  message\r\nFROM settings_robot\r\nORDER BY ts DESC\r\nLIMIT 200;\r\n",
+          "refId": "A",
+          "sql": {
+            "columns": [
+              {
+                "parameters": [],
+                "type": "function"
+              }
+            ],
+            "groupBy": [
+              {
+                "property": {
+                  "type": "string"
+                },
+                "type": "groupBy"
+              }
+            ],
+            "limit": 50
+          }
+        }
+      ],
+      "title": "settings_robot",
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "mysql",
+        "uid": "cf1tmijntrv9cb"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "footer": {
+              "reducers": []
+            },
+            "hideFrom": {
+              "viz": false
+            },
+            "inspect": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 24
+      },
+      "id": 8,
+      "options": {
+        "cellHeight": "sm",
+        "showHeader": true
+      },
+      "pluginVersion": "12.2.0",
+      "targets": [
+        {
+          "dataset": "sobotify_data",
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT\r\n  ts AS time,\r\n  topic,\r\n  message\r\nFROM settings_human\r\nORDER BY ts DESC\r\nLIMIT 200;\r\n",
+          "refId": "A",
+          "sql": {
+            "columns": [
+              {
+                "parameters": [],
+                "type": "function"
+              }
+            ],
+            "groupBy": [
+              {
+                "property": {
+                  "type": "string"
+                },
+                "type": "groupBy"
+              }
+            ],
+            "limit": 50
+          }
+        }
+      ],
+      "title": "settings_human",
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "mysql",
+        "uid": "cf1tmijntrv9cb"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "footer": {
+              "reducers": []
+            },
+            "hideFrom": {
+              "viz": false
+            },
+            "inspect": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 32
+      },
+      "id": 9,
+      "options": {
+        "cellHeight": "sm",
+        "showHeader": true
+      },
+      "pluginVersion": "12.2.0",
+      "targets": [
+        {
+          "dataset": "sobotify_data",
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT\r\n  ts AS time,\r\n  topic,\r\n  message\r\nFROM logging_meta\r\nORDER BY ts DESC\r\nLIMIT 200;\r\n",
+          "refId": "A",
+          "sql": {
+            "columns": [
+              {
+                "parameters": [],
+                "type": "function"
+              }
+            ],
+            "groupBy": [
+              {
+                "property": {
+                  "type": "string"
+                },
+                "type": "groupBy"
+              }
+            ],
+            "limit": 50
+          }
+        }
+      ],
+      "title": "logging_meta",
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "mysql",
+        "uid": "cf1tmijntrv9cb"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "footer": {
+              "reducers": []
+            },
+            "hideFrom": {
+              "viz": false
+            },
+            "inspect": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 32
+      },
+      "id": 6,
+      "options": {
+        "cellHeight": "sm",
+        "showHeader": true
+      },
+      "pluginVersion": "12.2.0",
+      "targets": [
+        {
+          "dataset": "sobotify_data",
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT\r\n  ts AS time,\r\n  topic,\r\n  message\r\nFROM robot_reaction\r\nORDER BY ts DESC\r\nLIMIT 200;\r\n",
+          "refId": "A",
+          "sql": {
+            "columns": [
+              {
+                "parameters": [],
+                "type": "function"
+              }
+            ],
+            "groupBy": [
+              {
+                "property": {
+                  "type": "string"
+                },
+                "type": "groupBy"
+              }
+            ],
+            "limit": 50
+          }
+        }
+      ],
+      "title": "robot_reaction",
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "mysql",
+        "uid": "cf1tmijntrv9cb"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "footer": {
+              "reducers": []
+            },
+            "inspect": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 40
+      },
+      "id": 13,
+      "options": {
+        "cellHeight": "sm",
+        "showHeader": true
+      },
+      "pluginVersion": "12.2.0",
+      "targets": [
+        {
+          "dataset": "sobotify_data",
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT\r\n  ts AS time,\r\n  topic,\r\n  message\r\nFROM log_raw\r\nORDER BY ts DESC\r\nLIMIT 1000;\r\n",
+          "refId": "A",
+          "sql": {
+            "columns": [
+              {
+                "parameters": [],
+                "type": "function"
+              }
+            ],
+            "groupBy": [
+              {
+                "property": {
+                  "type": "string"
+                },
+                "type": "groupBy"
+              }
+            ],
+            "limit": 50
+          }
+        }
+      ],
+      "title": "log_raw",
+      "type": "table"
+    }
+  ],
+  "preload": false,
+  "refresh": "5s",
+  "schemaVersion": 42,
+  "tags": [],
+  "templating": {
+    "list": []
+  },
+  "time": {
+    "from": "now-30d",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "browser",
+  "title": "sobotify_quiz",
+  "uid": "adg27zv",
+  "version": 153
+}
