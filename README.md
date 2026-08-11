@@ -5,6 +5,7 @@ Dieses Repository enthält die im Rahmen der Bachelorarbeit
 **„Entwicklung und Umsetzung eines Systems zur Speicherung und Analyse von Daten in sozialen Robotik-Anwendungen“**
 
 entwickelten Erweiterungen für das **Sobotify-Framework**.
+Die Arbeit wurde unter Betreuung von **Prof. Dr.-Ing. Heiko Hübert** durchgeführt.
 
 Ziel der Erweiterung ist die strukturierte Speicherung von MQTT-basierten Interaktionsdaten in einer MariaDB-Datenbank sowie deren anschließende Analyse und Visualisierung mit Grafana.
 
