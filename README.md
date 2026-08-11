@@ -84,21 +84,13 @@ sobotify-main/
 │
 ├── README.md
 ├── LICENSE
-├── .env.example
-├── .gitignore
 │
-├── dashboard/
-│   └── sobotify_quiz.json
 │
-├── sql/
-│   └── sobotify_data_structure.sql
 │
-├── docs/
-│   ├── logger_BA_extension.md
-│   └── sobotify_BA_extension.md
 │
 └── sobotify/
     │
+    ├── .env
     ├── sobotify.py
     │
     └── tools/
@@ -109,7 +101,8 @@ sobotify-main/
             ├── __init__.py
             ├── db_init.py
             ├── mqtt_to_mariadb.py
-            └── live_to_mariadb.py
+            ├── live_to_mariadb.py
+            └── sobotify_quiz-1762228742744.json
 ```
 
 Die Position von `live_to_mariadb.py` ist insbesondere für den folgenden Import im erweiterten Logger relevant:
