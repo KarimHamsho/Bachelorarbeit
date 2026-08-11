@@ -25,6 +25,7 @@ from sobotify.tools.analysing import live_to_mariadb
 ## 2. Aufbau der MariaDB-Verbindung
 
 ### Position
+
 In der Methode:
 ```python
 LoggerServer.__init__()
